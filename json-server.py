@@ -2,12 +2,10 @@ import json
 from http.server import HTTPServer
 from nss_handler import HandleRequests, status
 
-
 # Add your imports below this line
-from views import list_docks, retrieve_dock, delete_dock, update_dock
-from views import list_haulers, retrieve_hauler, delete_hauler, update_hauler
-from views import list_ships, retrieve_ship, delete_ship, update_ship
-
+from views import list_docks, retrieve_dock, delete_dock, update_dock, create_dock
+from views import list_haulers, retrieve_hauler, delete_hauler, update_hauler, create_hauler
+from views import list_ships, retrieve_ship, delete_ship, update_ship, create_ship
 
 class JSONServer(HandleRequests):
     """Server class to handle incoming HTTP requests for shipping ships"""
@@ -45,35 +43,28 @@ class JSONServer(HandleRequests):
         else:
             return self.response("", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
-    def do_PUT(self):
-        """Handle PUT requests from a client"""
+    def do_POST(self):
+        """Handle POST requests from a client"""
 
-        # Parse the URL and get the primary key
+        # Parse the URL
         url = self.parse_url(self.path)
-        pk = url["pk"]
 
         # Get the request body JSON for the new data
         content_len = int(self.headers.get('content-length', 0))
         request_body = self.rfile.read(content_len)
         request_body = json.loads(request_body)
 
-        if url["requested_resource"] == "ships":
-            if pk != 0:
-                successfully_updated = update_ship(pk, request_body)
-                if successfully_updated:
-                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+        if url["requested_resource"] == "ship":
+            create_ship(request_body)
+            return self.response("", status.HTTP_201_SUCCESS_CREATED.value)
 
-        elif url["requested_resource"] == "docks":
-            if pk != 0:
-                successfully_updated = update_dock(pk, request_body)
-                if successfully_updated:
-                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+        elif url["requested_resource"] == "dock":
+            create_dock(request_body)
+            return self.response("", status.HTTP_201_SUCCESS_CREATED.value)
 
-        if url["requested_resource"] == "haulers":
-            if pk != 0:
-                successfully_updated = update_hauler(pk, request_body)
-                if successfully_updated:
-                    return self.response("", status.HTTP_204_SUCCESS_NO_RESPONSE_BODY.value)
+        elif url["requested_resource"] == "hauler":
+            create_hauler(request_body)
+            return self.response("", status.HTTP_201_SUCCESS_CREATED.value)
 
         return self.response("Requested resource not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
@@ -110,20 +101,7 @@ class JSONServer(HandleRequests):
         else:
             return self.response("Not found", status.HTTP_404_CLIENT_ERROR_RESOURCE_NOT_FOUND.value)
 
-    def do_POST(self):
-        """Handle POST requests from a client"""
-
-        pass
-
-
-
-
-
-
-
-#
 # THE CODE BELOW THIS LINE IS NOT IMPORTANT FOR REACHING YOUR LEARNING OBJECTIVES
-#
 def main():
     host = ''
     port = 8000
